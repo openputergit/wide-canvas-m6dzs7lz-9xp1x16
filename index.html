@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Finance Jobs Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-[Inter]">
+    <div class="min-h-screen">
+        <header class="bg-teal-600 text-white p-4 sticky top-0 z-50">
+            <div class="container mx-auto">
+                <h1 class="text-2xl font-bold">Restaurant Finance Jobs Tracker</h1>
+                <p class="text-sm mt-1">Last updated: <span id="lastUpdate"></span></p>
+                <p class="text-sm mt-1">Showing <span id="resultCount">0</span> results</p>
+            </div>
+        </header>
+
+        <main class="container mx-auto p-4">
+            <div class="bg-white rounded-lg shadow p-4 mb-6">
+                <h2 class="text-lg font-semibold mb-4">Search Filters</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Job Category</label>
+                        <select id="jobCategory" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="all">All Categories</option>
+                            <option value="accounting">Accounting</option>
+                            <option value="bookkeeping">Bookkeeping</option>
+                            <option value="ap">Accounts Payable</option>
+                            <option value="finance">Finance</option>
+                            <option value="controller">Controller</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">State</label>
+                        <select id="state" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="all">All States</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Job Type</label>
+                        <select id="jobType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="all">All Types</option>
+                            <option value="remote">Remote</option>
+                            <option value="hybrid">Hybrid</option>
+                            <option value="onsite">On-site</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Experience Level</label>
+                        <select id="experience" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                            <option value="all">All Levels</option>
+                            <option value="entry">Entry Level</option>
+                            <option value="mid">Mid Level</option>
+                            <option value="senior">Senior Level</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4 flex gap-4">
+                    <button id="applyFilters" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors">
+                        Apply Filters
+                    </button>
+                    <button id="exportBtn" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                        Export to Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-4 border-b">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Job Listings</h2>
+                        <div class="flex gap-2">
+                            <select id="sortBy" class="rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                                <option value="recent">Most Recent</option>
+                                <option value="relevant">Most Relevant</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="jobListings" class="divide-y max-h-[600px] overflow-y-auto">
+                    <!-- Jobs will be populated here -->
+                </div>
+                <div id="loadMore" class="p-4 text-center">
+                    <button class="text-teal-600 hover:text-teal-700 font-medium">
+                        Load More Results
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // States data
+        const states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"];
+        
+        // Populate states dropdown
+        const stateSelect = document.getElementById('state');
+        states.forEach(state => {
+            const option = document.createElement('option');
+            option.value = state.toLowerCase();
+            option.textContent = state;
+            stateSelect.appendChild(option);
+        });
+
+        // Generate mock data (50+ results)
+        function generateMockJobs(count = 55) {
+            const companies = ["Restaurant Group USA", "Fine Dining Associates", "National Restaurant Chain", "Fast Casual Enterprises", "Food Service Solutions", "Hospitality Finance Group"];
+            const titles = ["Senior Accountant", "Bookkeeper", "AP Specialist", "Financial Controller", "Finance Manager", "Staff Accountant"];
+            const jobs = [];
+
+            for (let i = 0; i < count; i++) {
+                const randomState = states[Math.floor(Math.random() * states.length)];
+                const randomCity = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia"][Math.floor(Math.random() * 6)];
+                jobs.push({
+                    id: i + 1,
+                    title: titles[Math.floor(Math.random() * titles.length)],
+                    company: companies[Math.floor(Math.random() * companies.length)],
+                    location: `${randomCity}, ${randomState}`,
+                    type: ["Remote", "Hybrid", "On-site"][Math.floor(Math.random() * 3)],
+                    salary: `$${60 + Math.floor(Math.random() * 60)}k - $${80 + Math.floor(Math.random() * 40)}k`,
+                    posted: `${Math.floor(Math.random() * 7) + 1}d ago`,
+                    linkedinUrl: `https://linkedin.com/jobs/${i + 1}`,
+                    requirements: "• 3+ years restaurant accounting experience\n• Bachelor's degree in Accounting or Finance\n• Experience with restaurant POS systems",
+                });
+            }
+            return jobs;
+        }
+
+        let allJobs = generateMockJobs();
+        document.getElementById('resultCount').textContent = allJobs.length;
+
+        function displayJobs(jobs) {
+            const container = document.getElementById('jobListings');
+            container.innerHTML = '';
+
+            jobs.forEach(job => {
+                const jobElement = document.createElement('div');
+                jobElement.className = 'p-4 hover:bg-gray-50 transition-colors';
+                jobElement.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-semibold text-lg text-teal-700">${job.title}</h3>
+                                <span class="text-sm text-gray-500">${job.posted}</span>
+                            </div>
+                            <p class="text-gray-800 font-medium">${job.company}</p>
+                            <div class="flex flex-wrap items-center gap-4 mt-2">
+                                <span class="text-sm text-gray-600"><i class="bi bi-geo-alt"></i> ${job.location}</span>
+                                <span class="text-sm text-gray-600"><i class="bi bi-building"></i> ${job.type}</span>
+                                <span class="text-sm text-gray-600"><i class="bi bi-cash"></i> ${job.salary}</span>
+                            </div>
+                            <div class="mt-3 text-sm text-gray-600">
+                                <p class="font-medium mb-1">Requirements:</p>
+                                <pre class="font-[Inter] whitespace-pre-wrap">${job.requirements}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <a href="${job.linkedinUrl}" target="_blank" class="inline-flex items-center gap-2 text-sm text-white bg-blue-600 px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                            <i class="bi bi-linkedin"></i> View on LinkedIn
+                        </a>
+                        <button class="text-sm text-teal-600 hover:text-teal-700 px-4 py-2 rounded-md border border-teal-600 hover:border-teal-700 transition-colors">
+                            Save Job
+                        </button>
+                    </div>
+                `;
+                container.appendChild(jobElement);
+            });
+        }
+
+        // Initial display
+        displayJobs(allJobs);
+
+        // Filter functionality
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            // In a real application, this would filter based on selected criteria
+            alert('Filters applied! In a real application, this would fetch filtered results from the API.');
+        });
+
+        // Export functionality
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            alert('Exporting current job listings to Excel...');
+        });
+
+        // Load more functionality
+        document.getElementById('loadMore').addEventListener('click', () => {
+            const newJobs = generateMockJobs(10);
+            allJobs = [...allJobs, ...newJobs];
+            document.getElementById('resultCount').textContent = allJobs.length;
+            displayJobs(allJobs);
+        });
+
+        // Auto-update timestamp
+        function updateTimestamp() {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 60000);
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
